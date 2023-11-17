@@ -16,6 +16,8 @@
 package org.springframework.samples.petclinic.owner;
 
 import jakarta.validation.Valid;
+import org.springframework.samples.petclinic.vet.Vet;
+import org.springframework.samples.petclinic.vet.VetAutoAssignmentService;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.WebDataBinder;
@@ -34,9 +36,15 @@ import java.util.Map;
 class VisitController {
 
 	private final OwnerRepository owners;
+	private final VetAutoAssignmentService vetAutoAssignmentService;
+	private final PetRepository petRepository;
 
-	public VisitController(OwnerRepository owners) {
+	public VisitController(OwnerRepository owners,
+						   VetAutoAssignmentService vetAutoAssignmentService,
+						   PetRepository petRepository) {
 		this.owners = owners;
+		this.vetAutoAssignmentService = vetAutoAssignmentService;
+		this.petRepository = petRepository;
 	}
 
 	// Spring MVC calls method loadPetWithVisit(...) before processNewVisitForm is
@@ -47,6 +55,9 @@ class VisitController {
 		if (result.hasErrors()) {
 			return "pets/createOrUpdateVisitForm";
 		}
+		Pet pet = petRepository.getReferenceById(petId);
+		Vet vet = vetAutoAssignmentService.findAppropriateVet(pet);
+		visit.setVet(vet);
 
 		owner.addVisit(petId, visit);
 		this.owners.save(owner);
